@@ -1,4 +1,5 @@
 import json
+from bson.json_util import loads
 import pandas as pd
 from pymongo import MongoClient
 from datetime import datetime
@@ -21,10 +22,12 @@ playbacks_collection = db['playbacks']
 db.drop_collection('users')
 users_collection = db['users']
 
+
 colnames = ['variation', '_id', 'artist', 'title']
 df_songs = pd.read_csv('./data/unique_tracks.txt', engine='python', sep='<SEP>', names=colnames, header=None)
 df_songs = df_songs.drop(columns=['variation'])
 df_songs = df_songs.drop_duplicates(subset=['_id'])
+
 
 # ARTISTS
 df_artists = df_songs['artist']
@@ -33,13 +36,25 @@ records = json.loads(df_artists.T.to_json()).values()
 records = list(map((lambda x: {'name': x}), records))
 artists_collection.insert(records)
 
-# SONGS
-records = json.loads(df_songs.T.to_json()).values()
-songs_collection.insert(records)
-
 # PLAYBACKS
 colnames = ['userId', 'songId', 'dateId']
 df_playback = pd.read_csv('./data/triplets_sample.txt', engine='python', sep='<SEP>', names=colnames, header=None)
+
+artistIds = []
+for index, row in df_playback.iterrows():
+    song_row = df_songs.loc[df_songs['_id'] == row['songId']]
+    artist_name = song_row.iloc[0]['artist']
+    artist_id = str(artists_collection.find_one({'name': artist_name})['_id'])
+    artistIds.append(artist_id)
+
+df_playback['artistId'] = artistIds
+records = loads(df_playback.T.to_json()).values()
+playbacks_collection.insert(records)
+
+# SONGS
+df_songs.drop('artist', axis=1, inplace=True)
+records = json.loads(df_songs.T.to_json()).values()
+songs_collection.insert(records)
 
 # DATES
 df_dates = df_playback['dateId']
