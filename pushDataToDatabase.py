@@ -38,7 +38,8 @@ artists_collection.insert(records)
 
 # PLAYBACKS
 colnames = ['userId', 'songId', 'dateId']
-df_playback = pd.read_csv('./data/triplets_sample.txt', engine='python', sep='<SEP>', names=colnames, header=None)
+df_playback = pd.read_csv('./data/triplets_sample_20p.txt', engine='python', sep='<SEP>', names=colnames, header=None,
+                          nrows=10000)
 
 artistIds = []
 for index, row in df_playback.iterrows():
