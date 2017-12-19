@@ -41,15 +41,13 @@ colnames = ['userId', 'songId', 'dateId']
 df_playback = pd.read_csv('./data/triplets_sample_20p.txt', engine='python', sep='<SEP>', names=colnames, header=None,
                           nrows=10000)
 
-artistIds = []
+records = list(loads(df_playback.T.to_json()).values())
 for index, row in df_playback.iterrows():
     song_row = df_songs.loc[df_songs['_id'] == row['songId']]
     artist_name = song_row.iloc[0]['artist']
-    artist_id = str(artists_collection.find_one({'name': artist_name})['_id'])
-    artistIds.append(artist_id)
+    artist_id = artists_collection.find_one({'name': artist_name})['_id']
+    records[index]['artistId'] = artist_id
 
-df_playback['artistId'] = artistIds
-records = loads(df_playback.T.to_json()).values()
 playbacks_collection.insert(records)
 
 # SONGS
