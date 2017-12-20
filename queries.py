@@ -11,33 +11,33 @@ playbacks_collection = db['playbacks']
 users_collection = db['users']
 
 # ranking piosenek
-pprint(list(playbacks_collection.aggregate([
-    {'$group': {'_id': '$songId', 'count': {'$sum': 1}}},
-    {'$sort': {'count': -1}},
-    {'$limit': 10},
-    {
-        '$lookup': {
-            'from': 'songs',
-            'localField': '_id',
-            'foreignField': '_id',
-            'as': 'song'
-        }
-    },
-    {'$match': {'song': {'$ne': []}}}
-])))
+# pprint(list(playbacks_collection.aggregate([
+#     {'$group': {'_id': '$songId', 'count': {'$sum': 1}}},
+#     {'$sort': {'count': -1}},
+#     {'$limit': 15},
+#     {
+#         '$lookup': {
+#             'from': 'songs',
+#             'localField': '_id',
+#             'foreignField': '_id',
+#             'as': 'song'
+#         }
+#     },
+#     {'$match': {'song': {'$ne': []}}}
+# ])))
 
 # ranking użytkowników
-pprint(list(playbacks_collection.aggregate([
-    {'$group': {'_id': '$userId', 'count': {'$sum': 1}}},
-    {'$sort': {'count': -1}},
-    {'$limit': 10}
-])))
+# pprint(list(playbacks_collection.aggregate([
+#     {'$group': {'_id': '$userId', 'count': {'$sum': 1}}},
+#     {'$sort': {'count': -1}},
+#     {'$limit': 15}
+# ])))
 
 # ranking artystów
 pprint(list(playbacks_collection.aggregate([
     {'$group': {'_id': '$artistId', 'count': {'$sum': 1}}},
     {'$sort': {'count': -1}},
-    {'$limit': 10},
+    {'$limit': 15},
     {
         '$lookup': {
             'from': 'artists',

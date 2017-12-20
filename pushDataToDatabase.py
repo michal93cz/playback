@@ -39,10 +39,11 @@ artists_collection.insert(records)
 # PLAYBACKS
 colnames = ['userId', 'songId', 'dateId']
 df_playback = pd.read_csv('./data/triplets_sample_20p.txt', engine='python', sep='<SEP>', names=colnames, header=None,
-                          nrows=10000)
+                          nrows=50000)
 
 records = list(loads(df_playback.T.to_json()).values())
 for index, row in df_playback.iterrows():
+    print(index)
     song_row = df_songs.loc[df_songs['_id'] == row['songId']]
     artist_name = song_row.iloc[0]['artist']
     artist_id = artists_collection.find_one({'name': artist_name})['_id']
