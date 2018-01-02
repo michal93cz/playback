@@ -3,7 +3,8 @@ from bson.json_util import loads
 import pandas as pd
 from pymongo import MongoClient
 from datetime import datetime
-from pprint import pprint
+import time
+from dateutil.relativedelta import relativedelta as rd
 
 client = MongoClient()
 db = client['Playback']
@@ -23,6 +24,8 @@ playbacks_collection = db['playbacks']
 db.drop_collection('users')
 users_collection = db['users']
 
+# TIME
+start = time.time()
 
 colnames = ['variation', '_id', 'artist', 'title']
 df_songs = pd.read_csv('./data/unique_tracks.txt', engine='python', sep='<SEP>', names=colnames, header=None)
@@ -35,34 +38,43 @@ df_artists = df_songs['artist']
 df_artists = df_artists.drop_duplicates()
 records = json.loads(df_artists.T.to_json()).items()
 records = list(map((lambda x: {'_id': x[0], 'name': x[1]}), records))
-artists_collection.insert(records)
+df_artists = pd.DataFrame.from_records(records)
+artists_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 
 
-# PLAYBACKS
+
 print('playback read start')
 colnames = ['userId', 'songId', 'dateId']
 df_playback = pd.read_csv('./data/triplets_sample_20p.txt', engine='python', sep='<SEP>', names=colnames, header=None
-                          , nrows=10000)
+                          , nrows=10000000)
+
+
+# MERGE SONGS WITH ARTISTS
+df_songs = pd.merge(df_songs, df_artists, left_on='artist', right_on='name')
+df_songs.drop('artist', axis=1, inplace=True)
+df_songs.drop('name', axis=1, inplace=True)
+df_songs.columns = ['_id', 'title', 'artist_id']
+
+
+# MERGE PLAYBACKS WITH SONGS
+df_playback = pd.merge(df_playback, df_songs, left_on='songId', right_on='_id')
+df_playback.drop('_id', axis=1, inplace=True)
+df_playback.drop('title', axis=1, inplace=True)
+df_playback.columns = ['userId', 'songId', 'dateId', 'artistId']
+
+
+# PLAYBACKS
 print('playback list start')
 records = list(loads(df_playback.T.to_json()).values())
-
-# TO MUSIMY ZASTĄPIC:
-# for index, row in df_playback.iterrows():
-#     print(index)
-#     song_row = df_songs.loc[df_songs['_id'] == row['songId']]
-#     artist_name = song_row.iloc[0]['artist']
-#     artist_id = artists_collection.find_one({'name': artist_name})['_id']
-#     records[index]['artistId'] = artist_id
-
 print('playback insert start')
-playbacks_collection.insert(records)
+playbacks_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 print('playback inserted')
 
 
 # SONGS
-df_songs.drop('artist', axis=1, inplace=True)
+df_songs.drop('artist_id', axis=1, inplace=True)
 records = json.loads(df_songs.T.to_json()).values()
-songs_collection.insert(records)
+songs_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 
 
 # DATES
@@ -76,7 +88,8 @@ records = list(map((lambda x: {
     'year': datetime.fromtimestamp(x).year,
     'weekday': datetime.fromtimestamp(x).weekday()
 }), records))
-dates_collection.insert(records)
+dates_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
+print('dates inserted')
 
 
 # USERS
@@ -84,4 +97,9 @@ df_users = df_playback['userId']
 df_users = df_users.drop_duplicates()
 records = json.loads(df_dates.T.to_json()).values()
 records = list(map((lambda x: {'_id': x}), records))
-users_collection.insert(records)
+users_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
+
+# TIME
+time = time.time() - start
+fmt = '{0.days} days {0.hours} hours {0.minutes} minutes {0.seconds} seconds'
+print(fmt.format(rd(seconds=time)))
