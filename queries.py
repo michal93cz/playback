@@ -82,7 +82,15 @@ users_collection = db['users']
 # sumaryczna liczba odsłuchań w podziale na poszczególne miesiące
 start = time.time()
 pprint(list(dates_collection.aggregate([
-    {'$group': {'_id': '$month', 'count': {'$sum': 1}}},
+    {
+        '$lookup': {
+            'from': 'playbacks',
+            'localField': '_id',
+            'foreignField': 'dateId',
+            'as': 'playback'
+        }
+    },
+    {'$group': {'_id': {'month': '$month'}, 'count': {'$sum': {"$size": "$playback"}}}},
     {'$sort': {'_id': 1}}
 ])))
 end = time.time()
