@@ -1,0 +1,5 @@
+val textFile = sc.textFile("/Users/michalczupryniak/Desktop/data/all-shakespeare")
+
+val counts = (textFile.flatMap(line => line.split(" ")).map(word => (word ,1)). reduceByKey("+"))
+
+counts.saveAsTextFile("/Users/michalczupryniak/Desktop/data/all-shakespeare_count.txt")
