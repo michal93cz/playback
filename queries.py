@@ -12,25 +12,25 @@ playbacks_collection = db['playbacks']
 users_collection = db['users']
 
 # # ranking piosenek
-# start = time.time()
-# pprint(list(playbacks_collection.aggregate([
-#     {'$group': {'_id': '$songId', 'count': {'$sum': 1}}},
-#     {'$sort': {'count': -1}},
-#     {'$limit': 15},
-#     {
-#         '$lookup': {
-#             'from': 'songs',
-#             'localField': '_id',
-#             'foreignField': '_id',
-#             'as': 'song'
-#         }
-#     },
-#     {'$match': {'song': {'$ne': []}}}
-# ])))
-# end = time.time()
-# print(end - start)
+start = time.time()
+pprint(list(playbacks_collection.aggregate([
+    {'$group': {'_id': '$songId', 'count': {'$sum': 1}}},
+    {'$sort': {'count': -1}},
+    {'$limit': 15},
+    {
+        '$lookup': {
+            'from': 'songs',
+            'localField': '_id',
+            'foreignField': '_id',
+            'as': 'song'
+        }
+    },
+    {'$match': {'song': {'$ne': []}}}
+])))
+end = time.time()
+print(end - start)
 
-# ranking użytkowników
+# # ranking użytkowników
 # start = time.time()
 # pprint(list(playbacks_collection.aggregate([
 #     {'$group': {'_id': '$userId', 'count': {'$sum': 1}}},
@@ -60,38 +60,37 @@ users_collection = db['users']
 # print(end - start)
 
 
+# sumaryczna liczba odsłuchań w podziale na poszczególne miesiące
 # start = time.time()
-# pprint(list(playbacks_collection.aggregate([
-#     {'$group': {'_id': '$songId', 'count': {'$sum': 1}}},
-#     {'$sort': {'count': -1}},
-#     {'$limit': 15},
+# pprint(list(dates_collection.aggregate([
 #     {
 #         '$lookup': {
-#             'from': 'songs',
+#             'from': 'playbacks',
 #             'localField': '_id',
-#             'foreignField': '_id',
-#             'as': 'song'
+#             'foreignField': 'dateId',
+#             'as': 'playback'
 #         }
 #     },
-#     {'$match': {'song': {'$ne': []}}}
+#     {'$group': {'_id': {'month': '$month'}, 'count': {'$sum': {"$size": "$playback"}}}},
+#     {'$sort': {'_id': 1}}
+# ])))
+# end = time.time()
+# print(end - start)
+
+# Wszyscy użytkownicy, którzy odsłuchali wszystkie trzy najbardziej popularne piosenki zespołu Queen
+# start = time.time()
+# pprint(list(playbacks_collection.aggregate([
+#     { '$match': { 'artist_id': {'$in': }}}
 # ])))
 # end = time.time()
 # print(end - start)
 
 
-# sumaryczna liczba odsłuchań w podziale na poszczególne miesiące
-start = time.time()
-pprint(list(dates_collection.aggregate([
-    {
-        '$lookup': {
-            'from': 'playbacks',
-            'localField': '_id',
-            'foreignField': 'dateId',
-            'as': 'playback'
-        }
-    },
-    {'$group': {'_id': {'month': '$month'}, 'count': {'$sum': {"$size": "$playback"}}}},
-    {'$sort': {'_id': 1}}
-])))
-end = time.time()
-print(end - start)
+# db.Playback.aggregate([
+#     { $match: { artist_id: { $in: artistIds }}},
+#     { $group: { _id: "$song_id", unique_users: { $addToSet: "$user_id" }}},
+#     { $sort: { unique_users: -1 }},
+#     { $limit: 3 },
+#     { $unwind: "$unique_users"},
+#     { $group: {_id: null, all_users: { $addToSet: "$unique_users" }}},
+# ])
