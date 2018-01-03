@@ -5,6 +5,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import time
 from dateutil.relativedelta import relativedelta as rd
+from pprint import pprint
 
 client = MongoClient()
 db = client['Playback']
@@ -65,7 +66,9 @@ df_playback.columns = ['userId', 'songId', 'dateId', 'artistId']
 
 # PLAYBACKS
 print('playback list start')
-records = list(loads(df_playback.T.to_json()).values())
+records = loads(df_playback.T.to_json()).items()
+records = list(map((lambda x: {'_id': x[0], 'userId': x[1]['userId'], 'songId': x[1]['songId'],
+                               'dateId': x[1]['dateId'], 'artistId': x[1]['artistId']}), records))
 print('playback insert start')
 playbacks_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 print('playback inserted')
@@ -74,7 +77,9 @@ print('playback inserted')
 # SONGS
 df_songs.drop('artist_id', axis=1, inplace=True)
 records = json.loads(df_songs.T.to_json()).values()
+print('songs insert start')
 songs_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
+print('songs inserted')
 
 
 # DATES
@@ -88,6 +93,8 @@ records = list(map((lambda x: {
     'year': datetime.fromtimestamp(x).year,
     'weekday': datetime.fromtimestamp(x).weekday()
 }), records))
+
+print('dates insert start')
 dates_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 print('dates inserted')
 
@@ -97,6 +104,8 @@ df_users = df_playback['userId']
 df_users = df_users.drop_duplicates()
 records = json.loads(df_dates.T.to_json()).values()
 records = list(map((lambda x: {'_id': x}), records))
+
+print('users insert start')
 users_collection.insert(records, {'ordered': False, 'writeConcern': {'w': 0, 'j': False, 'wtimeout': 0}})
 
 # TIME
